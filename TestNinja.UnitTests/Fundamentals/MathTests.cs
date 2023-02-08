@@ -22,5 +22,17 @@ namespace TestNinja.UnitTests.Fundamentals
 
             Assert.That(result, Is.EqualTo(exceptionResult));
         }
+
+        [Test]
+        [TestCase(1,1,1)]
+        [TestCase(1,2,2)]
+        public void Max_WhenCalled_ReturnMaxArgument(int a, int b, int exceptionResult)
+        {
+            var math = new TestNinja.Fundamentals.Math();
+
+            var result = math.Max(a, b);
+
+            Assert.That(result, Is.EqualTo(exceptionResult));
+        }
     }
 }
