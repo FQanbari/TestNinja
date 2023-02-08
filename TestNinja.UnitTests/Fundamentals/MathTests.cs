@@ -11,10 +11,12 @@ namespace TestNinja.UnitTests.Fundamentals
     [TestFixture]
     public class MathTests
     {
+        private TestNinja.Fundamentals.Math _math;
+
         [SetUp]
         public void SetUp()
         {
-            var _math = new TestNinja.Fundamentals.Math();
+            _math = new TestNinja.Fundamentals.Math();
         }
 
         [Test]
@@ -23,7 +25,7 @@ namespace TestNinja.UnitTests.Fundamentals
         public void Add_WhenCalled_ReturnSumArgument(int a, int b, int exceptionResult)
         {
 
-            var result = math.Add(a, b);
+            var result = _math.Add(a, b);
 
             Assert.That(result, Is.EqualTo(exceptionResult));
         }
@@ -33,9 +35,7 @@ namespace TestNinja.UnitTests.Fundamentals
         [TestCase(1,2,2)]
         public void Max_WhenCalled_ReturnMaxArgument(int a, int b, int exceptionResult)
         {
-            var math = new TestNinja.Fundamentals.Math();
-
-            var result = math.Max(a, b);
+            var result = _math.Max(a, b);
 
             Assert.That(result, Is.EqualTo(exceptionResult));
         }
