@@ -33,6 +33,7 @@ namespace TestNinja.UnitTests.Fundamentals
         [Test]
         [TestCase(1,1,1)]
         [TestCase(1,2,2)]
+        [TestCase(2,1,2)]
         public void Max_WhenCalled_ReturnMaxArgument(int a, int b, int exceptionResult)
         {
             var result = _math.Max(a, b);
