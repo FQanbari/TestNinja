@@ -55,6 +55,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Fundamentals\CustomerControllerTests.cs" />
+    <Compile Include="Fundamentals\ErrorLoggerTests.cs" />
     <Compile Include="Fundamentals\HtmlFormatterTests.cs" />
     <Compile Include="Fundamentals\MathTests.cs" />
     <Compile Include="Fundamentals\ReservationTests.cs" />
