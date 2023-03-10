@@ -26,5 +26,15 @@ namespace TestNinja.UnitTests.Fundamentals
             Assert.That(_logger.LastError,Is.EqualTo("a"));
         }
 
+        [Test]
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase(" ")]
+        public void Log_InvalidError_ThrowArgumentNullExcepiton(string error)
+        {
+            Assert.That(() => _logger.Log(error),Throws.ArgumentNullException);
+            //Assert.That(() => _logger.Log(error),Throws.Exception.TypeOf<ArgumentNullException>);
+        }
+
     }
 }
