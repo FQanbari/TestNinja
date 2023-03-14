@@ -15,13 +15,12 @@ namespace TestNinja.UnitTests.Mocking
         [SetUp]
         public void SetUp()
         {
-            _service = new VideoService();
+            _service = new VideoService(new FakeFileReader());
         }
 
         [Test]
         public void ReadVideoTitle_EmptyFile_ReturnError()
         {
-            _service.FileReader = new FakeFileReader();
             var result = _service.ReadVideoTitle();
 
             Assert.That(result, Does.Contain("Error parsing the video.").IgnoreCase);
