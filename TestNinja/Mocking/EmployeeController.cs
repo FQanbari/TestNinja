@@ -4,18 +4,16 @@ namespace TestNinja.Mocking
 {
     public class EmployeeController
     {
-        private EmployeeContext _db;
+        private IEmployeeRepository _repository;
 
-        public EmployeeController()
+        public EmployeeController(IEmployeeRepository repository)
         {
-            _db = new EmployeeContext();
+            _repository = repository;
         }
 
         public ActionResult DeleteEmployee(int id)
         {
-            var employee = _db.Employees.Find(id);
-            _db.Employees.Remove(employee);
-            _db.SaveChanges();
+            _repository.RemoveEmployee(id);
             return RedirectToAction("Employees");
         }
 
@@ -24,7 +22,25 @@ namespace TestNinja.Mocking
             return new RedirectResult();
         }
     }
-
+    public interface IEmployeeRepository
+    {
+        void RemoveEmployee(int id);
+    }
+    public class EmployeeRepository
+    {
+        private EmployeeContext _db;
+        public EmployeeRepository()
+        {
+            _db = new EmployeeContext();
+        }
+        public void RemoveEmployee(int id)
+        {
+            var employee = _db.Employees.Find(id);
+            if (employee == null) return;
+            _db.Employees.Remove(employee);
+            _db.SaveChanges();
+        }
+    }
     public class ActionResult { }
  
     public class RedirectResult : ActionResult { }
