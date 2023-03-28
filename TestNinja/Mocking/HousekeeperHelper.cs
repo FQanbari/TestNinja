@@ -6,20 +6,34 @@ using System.Text;
 
 namespace TestNinja.Mocking
 {
-    public static class HousekeeperHelper
+    public class HousekeeperHelper
     {
-        private static readonly UnitOfWork UnitOfWork = new UnitOfWork();
+        private readonly IUnitOfwork _unitOfwork;
+        private readonly IStatementGenerator _statementGenerator;
+        private readonly IEmailSender _emailSender;
+        private readonly IXtraMessageBox _xtraMessageBox;
 
-        public static bool SendStatementEmails(DateTime statementDate)
+        public HousekeeperHelper(IUnitOfwork unitOfwork, 
+            IStatementGenerator statementGenerator,
+            IEmailSender emailSender,
+            IXtraMessageBox xtraMessageBox) 
         {
-            var housekeepers = UnitOfWork.Query<Housekeeper>();
+            _unitOfwork = unitOfwork;
+            _statementGenerator = statementGenerator;
+            _emailSender = emailSender;
+            _xtraMessageBox = xtraMessageBox;
+        }
+
+        public void SendStatementEmails(DateTime statementDate)
+        {
+            var housekeepers = _unitOfwork.Query<Housekeeper>();
 
             foreach (var housekeeper in housekeepers)
             {
-                if (housekeeper.Email == null)
+                if (string.IsNullOrWhiteSpace(housekeeper.Email))
                     continue;
 
-                var statementFilename = SaveStatement(housekeeper.Oid, housekeeper.FullName, statementDate);
+                var statementFilename = _statementGenerator.SaveStatement(housekeeper.Oid, housekeeper.FullName, statementDate);
 
                 if (string.IsNullOrWhiteSpace(statementFilename))
                     continue;
@@ -29,76 +43,93 @@ namespace TestNinja.Mocking
 
                 try
                 {
-                    EmailFile(emailAddress, emailBody, statementFilename,
+                    _emailSender.EmailFile(emailAddress, emailBody, statementFilename,
                         string.Format("Sandpiper Statement {0:yyyy-MM} {1}", statementDate, housekeeper.FullName));
                 }
                 catch (Exception e)
                 {
-                    XtraMessageBox.Show(e.Message, string.Format("Email failure: {0}", emailAddress),
+                    _xtraMessageBox.Show(e.Message, string.Format("Email failure: {0}", emailAddress),
                         MessageBoxButtons.OK);
                 }
             }
-
-            return true;
         }
 
-        private static string SaveStatement(int housekeeperOid, string housekeeperName, DateTime statementDate)
+        public interface IStatementGenerator
         {
-            var report = new HousekeeperStatementReport(housekeeperOid, statementDate);
-
-            if (!report.HasData)
-                return string.Empty;
-
-            report.CreateDocument();
-
-            var filename = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                string.Format("Sandpiper Statement {0:yyyy-MM} {1}.pdf", statementDate, housekeeperName));
-
-            report.ExportToPdf(filename);
-
-            return filename;
+            string SaveStatement(int housekeeperOid, string housekeeperName, DateTime statementDate);
         }
-
-        private static void EmailFile(string emailAddress, string emailBody, string filename, string subject)
+        public class StatementGenerator : IStatementGenerator
         {
-            var client = new SmtpClient(SystemSettingsHelper.EmailSmtpHost)
+            public string SaveStatement(int housekeeperOid, string housekeeperName, DateTime statementDate)
             {
-                Port = SystemSettingsHelper.EmailPort,
-                Credentials =
-                    new NetworkCredential(
-                        SystemSettingsHelper.EmailUsername,
-                        SystemSettingsHelper.EmailPassword)
-            };
+                var report = new HousekeeperStatementReport(housekeeperOid, statementDate);
 
-            var from = new MailAddress(SystemSettingsHelper.EmailFromEmail, SystemSettingsHelper.EmailFromName,
-                Encoding.UTF8);
-            var to = new MailAddress(emailAddress);
+                if (!report.HasData)
+                    return string.Empty;
 
-            var message = new MailMessage(from, to)
-            {
-                Subject = subject,
-                SubjectEncoding = Encoding.UTF8,
-                Body = emailBody,
-                BodyEncoding = Encoding.UTF8
-            };
+                report.CreateDocument();
 
-            message.Attachments.Add(new Attachment(filename));
-            client.Send(message);
-            message.Dispose();
+                var filename = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    string.Format("Sandpiper Statement {0:yyyy-MM} {1}.pdf", statementDate, housekeeperName));
 
-            File.Delete(filename);
+                report.ExportToPdf(filename);
+
+                return filename;
+            }
+
         }
+
+        public interface IEmailSender
+        {
+            void EmailFile(string emailAddress, string emailBody, string filename, string subject);
+        }
+        public class EmailSender : IEmailSender
+        {
+            public void EmailFile(string emailAddress, string emailBody, string filename, string subject)
+            {
+                var client = new SmtpClient(SystemSettingsHelper.EmailSmtpHost)
+                {
+                    Port = SystemSettingsHelper.EmailPort,
+                    Credentials =
+                new NetworkCredential(
+                SystemSettingsHelper.EmailUsername,
+                SystemSettingsHelper.EmailPassword)
+                };
+                var from = new MailAddress(SystemSettingsHelper.EmailFromEmail, SystemSettingsHelper.EmailFromName, Encoding.UTF8);
+                var to = new MailAddress(emailAddress);
+
+                var message = new MailMessage(from, to)
+                {
+                    Subject = subject,
+                    SubjectEncoding = Encoding.UTF8,
+                    Body = emailBody,
+                    BodyEncoding = Encoding.UTF8
+                };
+
+                message.Attachments.Add(new Attachment(filename));
+                client.Send(message);
+                message.Dispose();
+
+                File.Delete(filename);
+            }
+
+        }
+
+        
     }
 
     public enum MessageBoxButtons
     {
         OK
     }
-
-    public class XtraMessageBox
+    public interface IXtraMessageBox
     {
-        public static void Show(string s, string housekeeperStatements, MessageBoxButtons ok)
+        void Show(string s, string housekeeperStatements, MessageBoxButtons ok);
+    }
+    public class XtraMessageBox : IXtraMessageBox 
+    {
+        public void Show(string s, string housekeeperStatements, MessageBoxButtons ok)
         {
         }
     }

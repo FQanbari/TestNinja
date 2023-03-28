@@ -44,7 +44,11 @@ namespace TestNinja.Mocking
         }
     }
 
-    public class UnitOfWork
+    public interface IUnitOfwork
+    {
+        IQueryable<T> Query<T>();
+    }
+    public class UnitOfWork: IUnitOfwork
     {
         public IQueryable<T> Query<T>()
         {
